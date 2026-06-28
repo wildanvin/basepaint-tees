@@ -15,8 +15,8 @@ export default function CancelPage() {
             No order was placed.
           </h1>
           <p className="mt-4 text-lg leading-8 text-[#4a4a4a]">
-            This is the static cancellation page. The next step can connect it
-            to Stripe Checkout once the product flow feels right.
+            Stripe Checkout was canceled before payment. You can return to the
+            daily tee and try again with the same selected product.
           </p>
           <Link
             className="mt-8 inline-flex min-h-12 items-center justify-center border border-[#171717] bg-[#171717] px-5 text-sm font-semibold uppercase tracking-[0.14em] text-white"

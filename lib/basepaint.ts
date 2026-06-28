@@ -98,22 +98,21 @@ function colorDistance(a: string, b: string) {
   return (ar - br) ** 2 + (ag - bg) ** 2 + (ab - bb) ** 2;
 }
 
-function pickShirtColor(palette: string[]) {
+function pickShirtColor(palette: string[], seed = 0) {
   if (palette.length === 0) {
     return "Black";
   }
 
+  const chosenPaletteColor = palette[Math.abs(seed) % palette.length];
   let best = allowedShirtColors[0];
   let bestScore = Number.POSITIVE_INFINITY;
 
-  for (const paletteColor of palette) {
-    for (const shirtColor of allowedShirtColors) {
-      const score = colorDistance(paletteColor, shirtColor.hex);
+  for (const shirtColor of allowedShirtColors) {
+    const score = colorDistance(chosenPaletteColor, shirtColor.hex);
 
-      if (score < bestScore) {
-        best = shirtColor;
-        bestScore = score;
-      }
+    if (score < bestScore) {
+      best = shirtColor;
+      bestScore = score;
     }
   }
 
@@ -346,7 +345,7 @@ function buildProduct(day: number, metadata: UnknownRecord): DemoProduct {
     basepaintDay: day,
     theme,
     name: `BasePaint #${day} Tee`,
-    shirtColor: pickShirtColor(palette),
+    shirtColor: pickShirtColor(palette, day),
     palette: palette.length > 0 ? palette : demoProduct.palette,
     artUrl,
     frontPrintText: [`BasePaint #${day}`, theme],
@@ -385,7 +384,7 @@ function buildGraphqlProduct(
     basepaintDay: canvas.id,
     theme,
     name: `BasePaint #${canvas.id} Tee`,
-    shirtColor: pickShirtColor(canvas.palette),
+    shirtColor: pickShirtColor(canvas.palette, canvas.id),
     palette: canvas.palette.length > 0 ? canvas.palette : demoProduct.palette,
     artUrl: `https://basepaint.xyz/api/art/image?day=${canvas.id}`,
     frontPrintText: [`BasePaint #${canvas.id}`, theme],

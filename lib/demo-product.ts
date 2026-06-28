@@ -12,6 +12,10 @@ export type DemoProduct = {
   sizes: ShirtSize[];
   artUrl: string;
   frontPrintText: string[];
+  frontPrintUrl?: string;
+  backPrintUrl?: string;
+  mockupFrontUrl?: string;
+  mockupBackUrl?: string;
   dataSource: "demo" | "live";
   statusMessage: string;
 };

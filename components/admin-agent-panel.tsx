@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AgentRun } from "@/lib/mock-store";
+import type { AgentRun } from "@/lib/product-store";
 
 type AgentResponse = {
   ok: boolean;

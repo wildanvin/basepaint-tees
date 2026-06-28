@@ -2,13 +2,18 @@ import Link from "next/link";
 import { AdminAgentPanel } from "@/components/admin-agent-panel";
 import { getDailyProduct } from "@/lib/basepaint";
 import { formatPrice } from "@/lib/demo-product";
-import { getActiveProduct, getRecentAgentRuns } from "@/lib/mock-store";
+import { getFulfillmentMode, getRecentOrders } from "@/lib/order-store";
+import { getActiveProduct, getRecentAgentRuns } from "@/lib/product-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const product = getActiveProduct() ?? (await getDailyProduct());
-  const runs = getRecentAgentRuns();
+  const [storedProduct, runs, orders] = await Promise.all([
+    getActiveProduct().catch(() => undefined),
+    getRecentAgentRuns().catch(() => []),
+    getRecentOrders().catch(() => []),
+  ]);
+  const product = storedProduct ?? (await getDailyProduct());
   const rows = [
     ["BasePaint day", `#${product.basepaintDay}`],
     ["Theme", product.theme],
@@ -16,9 +21,9 @@ export default async function AdminPage() {
     ["Price", formatPrice(product.priceCents, product.currency)],
     ["Data source", product.dataSource],
     ["Fetch status", product.statusMessage],
-    ["Stripe status", "Not connected"],
-    ["Fulfillment mode", "Demo checkout"],
-    ["Recent orders", "None"],
+    ["Stripe status", "Checkout connected"],
+    ["Fulfillment mode", getFulfillmentMode()],
+    ["Recent orders", String(orders.length)],
   ];
 
   return (
@@ -54,6 +59,50 @@ export default async function AdminPage() {
             </div>
           ))}
         </div>
+
+        <section className="mt-8 border border-white/20 p-5">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#ff4d6d]">
+              Orders
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              Recent checkout events
+            </h2>
+          </div>
+
+          <div className="mt-5 grid gap-3">
+            {orders.length === 0 ? (
+              <p className="text-sm text-white/55">No orders yet.</p>
+            ) : (
+              orders.map((order) => (
+                <article className="border border-white/10 p-4" key={order.id}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em]">
+                      {order.status} · {order.size}
+                    </p>
+                    <time className="text-xs uppercase tracking-[0.14em] text-white/45">
+                      {new Date(order.createdAt).toLocaleString()}
+                    </time>
+                  </div>
+                  <dl className="mt-3 grid gap-2 text-sm text-white/70 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-white/40">Customer</dt>
+                      <dd>{order.customerEmail ?? "Unknown"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-white/40">Fulfillment</dt>
+                      <dd>{order.printfulOrderId ?? order.fulfillmentMode}</dd>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <dt className="text-white/40">Stripe session</dt>
+                      <dd className="break-all">{order.stripeSessionId}</dd>
+                    </div>
+                  </dl>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
 
         <AdminAgentPanel initialRuns={runs} />
       </section>
