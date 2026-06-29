@@ -18,6 +18,16 @@ The app should feel like an extension of the BasePaint experience: simple, daily
 
 This is **not** an AI fashion remix project. The artwork already exists and should not be altered creatively. The agent acts as a daily business operator: fetch art, generate fixed print files, publish one product, manage pricing, and fulfill orders, but maybe for we dont need an agent at this stage.
 
+## Current Implementation Update
+
+The original MVP notes below mention Stripe and Printful. The current app has changed:
+
+- Payments use direct ETH transfers on Base, detected through Alchemy.
+- Fulfillment uses Printify, not Printful.
+- Checkout calculates Printify shipping before creating the Base payment quote.
+- Mockups are generated and stored by the app/Supabase flow; Printify is used for fulfillment orders.
+- `FULFILLMENT_MODE` currently supports `mock`, `printify_draft`, and `printify_live`.
+
 ---
 
 ## Core MVP Goal

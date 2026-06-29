@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminAgentPanel } from "@/components/admin-agent-panel";
+import { AdminOrderActions } from "@/components/admin-order-actions";
 import { getDailyProduct } from "@/lib/basepaint";
 import { formatPrice } from "@/lib/demo-product";
 import { getFulfillmentMode, getRecentOrders } from "@/lib/order-store";
@@ -21,7 +22,8 @@ export default async function AdminPage() {
     ["Price", formatPrice(product.priceCents, product.currency)],
     ["Data source", product.dataSource],
     ["Fetch status", product.statusMessage],
-    ["Stripe status", "Checkout connected"],
+    ["Printify product", product.printifyProductId ?? "Not synced"],
+    ["Payment status", "Base ETH checkout"],
     ["Fulfillment mode", getFulfillmentMode()],
     ["Recent orders", String(orders.length)],
   ];
@@ -66,7 +68,7 @@ export default async function AdminPage() {
               Orders
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Recent checkout events
+              Recent Base payments
             </h2>
           </div>
 
@@ -91,13 +93,32 @@ export default async function AdminPage() {
                     </div>
                     <div>
                       <dt className="text-white/40">Fulfillment</dt>
-                      <dd>{order.printfulOrderId ?? order.fulfillmentMode}</dd>
+                      <dd>{order.fulfillmentOrderId ?? order.fulfillmentError ?? order.fulfillmentMode}</dd>
                     </div>
                     <div className="sm:col-span-2">
-                      <dt className="text-white/40">Stripe session</dt>
-                      <dd className="break-all">{order.stripeSessionId}</dd>
+                      <dt className="text-white/40">Payment</dt>
+                      <dd className="break-all">
+                        {order.paymentTxHash ?? order.paymentReference ?? "pending"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-white/40">Expected ETH</dt>
+                      <dd>{order.displayAmountEth ?? "Unknown"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-white/40">Total</dt>
+                      <dd>
+                        {order.totalPriceCents
+                          ? formatPrice(order.totalPriceCents, product.currency)
+                          : "Unknown"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-white/40">Payer</dt>
+                      <dd className="break-all">{order.payerAddress ?? "Pending"}</dd>
                     </div>
                   </dl>
+                  <AdminOrderActions orderId={order.id} status={order.status} />
                 </article>
               ))
             )}

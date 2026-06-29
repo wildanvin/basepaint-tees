@@ -2,7 +2,6 @@ import "server-only";
 
 import { readFile } from "node:fs/promises";
 import { generatedAssetPaths } from "@/lib/print-assets";
-import type { PrintfulMockupUrls } from "@/lib/printful";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 const buckets = {
@@ -63,7 +62,7 @@ async function uploadRemoteImage({
   const response = await fetch(imageUrl, { cache: "no-store" });
 
   if (!response.ok) {
-    throw new Error(`Failed to download Printful mockup: ${response.status}`);
+    throw new Error(`Failed to download remote mockup: ${response.status}`);
   }
 
   const contentType = response.headers.get("content-type") ?? "image/jpeg";
@@ -81,9 +80,9 @@ async function uploadRemoteImage({
   return supabase.storage.from(bucket).getPublicUrl(storagePath).data.publicUrl;
 }
 
-export async function uploadPrintfulMockups(
+export async function uploadRemoteMockups(
   basepaintDay: number,
-  urls: PrintfulMockupUrls,
+  urls: { front?: string; back?: string },
   version: string,
 ) {
   const uploaded: {
@@ -94,7 +93,7 @@ export async function uploadPrintfulMockups(
   if (urls.front) {
     uploaded.mockupFrontUrl = await uploadRemoteImage({
       bucket: "mockups",
-      storagePath: `basepaint-${basepaintDay}/${version}/printful_mockup_front.jpg`,
+      storagePath: `basepaint-${basepaintDay}/${version}/remote_mockup_front.jpg`,
       imageUrl: urls.front,
     });
   }
@@ -102,7 +101,7 @@ export async function uploadPrintfulMockups(
   if (urls.back) {
     uploaded.mockupBackUrl = await uploadRemoteImage({
       bucket: "mockups",
-      storagePath: `basepaint-${basepaintDay}/${version}/printful_mockup_back.jpg`,
+      storagePath: `basepaint-${basepaintDay}/${version}/remote_mockup_back.jpg`,
       imageUrl: urls.back,
     });
   }

@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
         hostname: "basepaint.xyz",
         pathname: "/api/art/**",
       },
+      {
+        protocol: "https",
+        hostname: "images-api.printify.com",
+        pathname: "/mockup/**",
+      },
       ...(supabaseHostname
         ? [
             {

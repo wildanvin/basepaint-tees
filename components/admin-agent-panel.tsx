@@ -9,10 +9,17 @@ type AgentResponse = {
   error?: string;
 };
 
+type PollResponse = {
+  checked?: number;
+  error?: string;
+};
+
 export function AdminAgentPanel({ initialRuns }: { initialRuns: AgentRun[] }) {
   const [runs, setRuns] = useState(initialRuns);
   const [isRunning, setIsRunning] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [pollMessage, setPollMessage] = useState<string | undefined>();
 
   async function runAgent() {
     setIsRunning(true);
@@ -31,6 +38,27 @@ export function AdminAgentPanel({ initialRuns }: { initialRuns: AgentRun[] }) {
       setError(runError instanceof Error ? runError.message : "Agent run failed.");
     } finally {
       setIsRunning(false);
+    }
+  }
+
+  async function pollPayments() {
+    setIsPolling(true);
+    setError(undefined);
+    setPollMessage(undefined);
+
+    try {
+      const response = await fetch("/api/payments/poll", { method: "POST" });
+      const payload = (await response.json()) as PollResponse;
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Payment polling failed.");
+      }
+
+      setPollMessage(`Checked ${payload.checked ?? 0} recent transfers. Refresh admin for updates.`);
+    } catch (pollError) {
+      setError(pollError instanceof Error ? pollError.message : "Payment polling failed.");
+    } finally {
+      setIsPolling(false);
     }
   }
 
@@ -53,11 +81,25 @@ export function AdminAgentPanel({ initialRuns }: { initialRuns: AgentRun[] }) {
         >
           {isRunning ? "Running..." : "Run daily sync"}
         </button>
+        <button
+          className="inline-flex min-h-12 items-center justify-center border border-white/30 px-5 text-sm font-bold uppercase tracking-[0.14em] text-white disabled:cursor-wait disabled:opacity-60"
+          disabled={isPolling}
+          onClick={pollPayments}
+          type="button"
+        >
+          {isPolling ? "Checking..." : "Poll payments"}
+        </button>
       </div>
 
       {error ? (
         <p className="mt-4 border border-red-400/40 bg-red-950/40 p-3 text-sm text-red-100">
           {error}
+        </p>
+      ) : null}
+
+      {pollMessage ? (
+        <p className="mt-4 border border-[#41c7ff]/40 bg-[#41c7ff]/10 p-3 text-sm text-[#dff8ff]">
+          {pollMessage}
         </p>
       ) : null}
 

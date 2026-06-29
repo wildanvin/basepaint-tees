@@ -5,9 +5,10 @@ import { type MouseEvent, useMemo, useState } from "react";
 import type { DemoProduct } from "@/lib/demo-product";
 
 type Slide = {
-  label: "Front" | "Back";
+  label: string;
   src?: string;
   alt: string;
+  fallbackSide?: "front" | "back";
 };
 
 function FallbackMockup({ product, side }: { product: DemoProduct; side: "front" | "back" }) {
@@ -62,18 +63,32 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
   const [isZooming, setIsZooming] = useState(false);
   const slides = useMemo<Slide[]>(
     () => [
-      {
-        label: "Front",
-        src: product.mockupFrontUrl,
-        alt: `${product.name} front mockup`,
-      },
-      {
-        label: "Back",
-        src: product.mockupBackUrl,
-        alt: `${product.name} back mockup`,
-      },
+      ...(product.mockups?.map((mockup) => ({
+        label: mockup.label,
+        src: mockup.src,
+        alt: `${product.name} ${mockup.label.toLowerCase()} mockup`,
+        fallbackSide: mockup.label.toLowerCase().includes("back")
+          ? ("back" as const)
+          : ("front" as const),
+      })) ?? []),
+      ...(!product.mockups?.length
+        ? [
+            {
+              label: "Front",
+              src: product.mockupFrontUrl,
+              alt: `${product.name} front mockup`,
+              fallbackSide: "front" as const,
+            },
+            {
+              label: "Back",
+              src: product.mockupBackUrl,
+              alt: `${product.name} back mockup`,
+              fallbackSide: "back" as const,
+            },
+          ]
+        : []),
     ],
-    [product.mockupBackUrl, product.mockupFrontUrl, product.name],
+    [product.mockupBackUrl, product.mockupFrontUrl, product.mockups, product.name],
   );
   const activeSlide = slides[activeIndex];
 
@@ -120,12 +135,12 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
                   src={slide.src}
                   alt={slide.alt}
                   fill
-                  priority={slide.label === "Front"}
+                  priority={activeIndex === 0}
                   sizes="(max-width: 1024px) 100vw, 760px"
                   className="object-contain p-5 sm:p-8"
                 />
               ) : (
-                <FallbackMockup product={product} side={slide.label.toLowerCase() as "front" | "back"} />
+                <FallbackMockup product={product} side={slide.fallbackSide ?? "front"} />
               )}
             </div>
           ))}
@@ -173,17 +188,21 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
         </button>
       </div>
 
-      <div className="flex items-center justify-center gap-2 border-t border-[#171717]/15 bg-white px-4 py-3">
+      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-[#171717]/15 bg-white px-4 py-3">
         {slides.map((slide, index) => (
           <button
             aria-label={`Show ${slide.label.toLowerCase()} mockup`}
-            className={`h-2.5 w-10 border border-[#171717]/40 ${
-              activeIndex === index ? "bg-[#171717]" : "bg-transparent"
+            className={`min-h-8 border border-[#171717]/40 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${
+              activeIndex === index
+                ? "bg-[#171717] text-white"
+                : "bg-transparent text-[#171717]"
             }`}
             key={slide.label}
             onClick={() => goTo(index)}
             type="button"
-          />
+          >
+            {slide.label}
+          </button>
         ))}
       </div>
     </section>

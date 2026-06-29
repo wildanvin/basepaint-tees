@@ -16,6 +16,17 @@ export type DemoProduct = {
   backPrintUrl?: string;
   mockupFrontUrl?: string;
   mockupBackUrl?: string;
+  mockups?: Array<{
+    label: string;
+    src: string;
+    cameraLabel?: string;
+  }>;
+  printifyProductId?: string;
+  printifyBlueprintId?: number;
+  printifyPrintProviderId?: number;
+  printifyVariants?: Record<string, number>;
+  printifySyncStatus?: string;
+  printifySyncedAt?: string;
   dataSource: "demo" | "live";
   statusMessage: string;
 };

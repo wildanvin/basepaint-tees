@@ -25,6 +25,13 @@ type DailyProductRow = {
   back_print_url: string;
   mockup_front_url: string | null;
   mockup_back_url: string | null;
+  mockups_json: DemoProduct["mockups"] | null;
+  printify_product_id: string | null;
+  printify_blueprint_id: number | null;
+  printify_print_provider_id: number | null;
+  printify_variants_json: Record<string, number> | null;
+  printify_sync_status: string | null;
+  printify_synced_at: string | null;
   price_cents: number;
   currency: string;
   status: string;
@@ -60,6 +67,13 @@ function productFromRow(row: DailyProductRow): DemoProduct {
     backPrintUrl: row.back_print_url,
     mockupFrontUrl: row.mockup_front_url ?? undefined,
     mockupBackUrl: row.mockup_back_url ?? undefined,
+    mockups: Array.isArray(row.mockups_json) ? row.mockups_json : undefined,
+    printifyProductId: row.printify_product_id ?? undefined,
+    printifyBlueprintId: row.printify_blueprint_id ?? undefined,
+    printifyPrintProviderId: row.printify_print_provider_id ?? undefined,
+    printifyVariants: row.printify_variants_json ?? undefined,
+    printifySyncStatus: row.printify_sync_status ?? undefined,
+    printifySyncedAt: row.printify_synced_at ?? undefined,
     dataSource: "live",
     statusMessage: "Loaded from Supabase.",
   };
@@ -93,8 +107,43 @@ export async function getActiveProduct() {
   return data ? productFromRow(data as DailyProductRow) : undefined;
 }
 
+export async function getProductById(productId: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("daily_products")
+    .select("*")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load product: ${error.message}`);
+  }
+
+  return data ? productFromRow(data as DailyProductRow) : undefined;
+}
+
+export async function getProductByBasepaintDay(basepaintDay: number) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("daily_products")
+    .select("*")
+    .eq("basepaint_day", basepaintDay)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load product by BasePaint day: ${error.message}`);
+  }
+
+  return data ? productFromRow(data as DailyProductRow) : undefined;
+}
+
 export async function upsertDailyProduct(product: DemoProduct) {
   const supabase = getSupabaseAdmin();
+  await supabase
+    .from("daily_products")
+    .update({ status: "archived", updated_at: new Date().toISOString() })
+    .neq("basepaint_day", product.basepaintDay);
+
   const { data, error } = await supabase
     .from("daily_products")
     .upsert(
@@ -110,6 +159,13 @@ export async function upsertDailyProduct(product: DemoProduct) {
         back_print_url: product.backPrintUrl,
         mockup_front_url: product.mockupFrontUrl ?? null,
         mockup_back_url: product.mockupBackUrl ?? null,
+        mockups_json: product.mockups ?? null,
+        printify_product_id: product.printifyProductId ?? null,
+        printify_blueprint_id: product.printifyBlueprintId ?? null,
+        printify_print_provider_id: product.printifyPrintProviderId ?? null,
+        printify_variants_json: product.printifyVariants ?? null,
+        printify_sync_status: product.printifySyncStatus ?? null,
+        printify_synced_at: product.printifySyncedAt ?? null,
         price_cents: product.priceCents,
         currency: product.currency.toLowerCase(),
         status: "active",
