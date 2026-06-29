@@ -38,7 +38,7 @@ const printLayout = {
     boxWidth: 1500,
     boxHeight: 290,
     left: 150,
-    top: 220,
+    top: 190,
     cell: 18,
     gap: 2,
     align: 'start' as const,
@@ -48,7 +48,7 @@ const printLayout = {
     // top is the main value to change if the whole back design needs to move up/down.
     maxSize: 1500,
     left: 150,
-    top: 600,
+    top: 570,
   },
 }
 

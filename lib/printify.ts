@@ -112,7 +112,7 @@ const preferredMockups = [
   { cameraLabel: "folded", label: "Folded" },
   { cameraLabel: "hanging-1", label: "Hanging" },
   { cameraLabel: "person-2", label: "Person 2" },
-  { cameraLabel: "person-6-back", label: "Person 6 Back" },
+  { cameraLabel: "duo", label: "Duo" },
   { cameraLabel: "person-3", label: "Person 3" },
   { cameraLabel: "person-7-back", label: "Person 7 Back" },
   { cameraLabel: "size-chart", label: "Size Chart" },
