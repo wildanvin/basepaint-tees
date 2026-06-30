@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-server";
 export type ShippingAddress = {
   line1: string;
   line2?: string | null;
+  reference?: string | null;
   city: string;
   state?: string | null;
   postalCode: string;

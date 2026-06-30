@@ -394,6 +394,7 @@ function addressTo({
   shipping: ShippingAddress;
 }) {
   const { firstName, lastName } = splitName(customerName);
+  const secondaryAddress = [shipping.line2, shipping.reference].filter(Boolean).join(" | ");
 
   return {
     first_name: firstName,
@@ -402,7 +403,7 @@ function addressTo({
     country: shipping.country,
     region: shipping.state ?? "",
     address1: shipping.line1,
-    address2: shipping.line2 ?? "",
+    address2: secondaryAddress,
     city: shipping.city,
     zip: shipping.postalCode,
   };

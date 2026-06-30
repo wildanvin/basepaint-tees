@@ -23,12 +23,27 @@ type CheckoutInput = {
 };
 
 const validSizes: ShirtSize[] = ["S", "M", "L", "XL", "2XL"];
+const deliveryReferenceMaxLength = 60;
 
 function validateText(value: string | undefined, label: string) {
   const normalized = value?.trim();
 
   if (!normalized) {
     throw new Error(`${label} is required.`);
+  }
+
+  return normalized;
+}
+
+function validateOptionalText(value: string | undefined | null, label: string, maxLength: number) {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.length > maxLength) {
+    throw new Error(`${label} must be ${maxLength} characters or fewer.`);
   }
 
   return normalized;
@@ -42,6 +57,11 @@ function validateShipping(input: CheckoutInput["shipping"]): ShippingAddress {
   return {
     line1: validateText(input.line1, "Address line 1"),
     line2: input.line2?.trim() || null,
+    reference: validateOptionalText(
+      input.reference,
+      "Delivery reference",
+      deliveryReferenceMaxLength,
+    ),
     city: validateText(input.city, "City"),
     state: input.state?.trim() || null,
     postalCode: validateText(input.postalCode, "Postal code"),
