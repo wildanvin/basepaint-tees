@@ -29,20 +29,24 @@ export type CheckoutResponse = CheckoutQuoteResponse & {
 type CheckoutSummaryProps = {
   quote: CheckoutQuoteResponse;
   isLoading: boolean;
+  isSignedIn: boolean;
   selectedSize: ShirtSize;
   shirtColor: string;
   theme: string;
   onBack: () => void;
+  onAuthChange: (isSignedIn: boolean) => void;
   onPay: () => void;
 };
 
 export function CheckoutSummary({
   quote,
   isLoading,
+  isSignedIn,
   selectedSize,
   shirtColor,
   theme,
   onBack,
+  onAuthChange,
   onPay,
 }: CheckoutSummaryProps) {
   return (
@@ -69,6 +73,10 @@ export function CheckoutSummary({
             <span>Total</span>
             <span className="font-semibold">{quote.fiatPrice}</span>
           </div>
+          <div className="flex justify-between gap-4 text-base">
+            <span>Pay on Base</span>
+            <span className="font-semibold">{quote.displayAmountEth} ETH</span>
+          </div>
         </div>
       </div>
 
@@ -76,17 +84,19 @@ export function CheckoutSummary({
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
           Sign in and pay on Base
         </p>
-        <p className="text-3xl font-semibold">~{quote.displayAmountEth} ETH</p>
+        <p className="text-3xl font-semibold">{quote.displayAmountEth} ETH</p>
         <p className="text-[#4a4a4a]">
           Sign in with Ethereum on Base, then the final exact amount and order reference
           will be created.
         </p>
-        <div className="mt-2 justify-self-start">
-          <AccountButton />
-        </div>
+        {!isSignedIn ? (
+          <div className="mt-2">
+            <AccountButton onAuthChange={onAuthChange} variant="button" />
+          </div>
+        ) : null}
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-[0.7fr_1fr]">
+      <div className={`grid gap-2 ${isSignedIn ? "sm:grid-cols-[0.7fr_1fr]" : ""}`}>
         <button
           className="min-h-12 border border-[#171717]/25 px-5 text-sm font-bold uppercase tracking-[0.14em]"
           disabled={isLoading}
@@ -95,14 +105,16 @@ export function CheckoutSummary({
         >
           Back
         </button>
-        <button
-          className="min-h-12 border border-[#171717] bg-[#171717] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2b2b2b] disabled:cursor-wait disabled:bg-[#696969]"
-          disabled={isLoading}
-          onClick={onPay}
-          type="button"
-        >
-          {isLoading ? "Opening wallet..." : "Pay on Base"}
-        </button>
+        {isSignedIn ? (
+          <button
+            className="min-h-12 border border-[#171717] bg-[#171717] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2b2b2b] disabled:cursor-wait disabled:bg-[#696969]"
+            disabled={isLoading}
+            onClick={onPay}
+            type="button"
+          >
+            {isLoading ? "Opening wallet..." : "Pay on Base"}
+          </button>
+        ) : null}
       </div>
     </div>
   );

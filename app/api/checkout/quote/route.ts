@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
     if (!product.printifyProductId || !product.printifyVariants) {
       return Response.json(
-        { error: "Product is not synced to Printify yet. Run the daily sync first." },
+        { error: "Checkout is not available for today's tee yet." },
         { status: 409 },
       );
     }

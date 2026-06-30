@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { DemoProduct } from "@/lib/demo-product";
+import { productPriceCents, type DemoProduct } from "@/lib/demo-product";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export type AgentRun = {
@@ -56,7 +56,7 @@ function productFromRow(row: DailyProductRow): DemoProduct {
     basepaintDay: row.basepaint_day,
     theme,
     name: `BasePaint #${row.basepaint_day} Tee`,
-    priceCents: row.price_cents,
+    priceCents: productPriceCents,
     currency: row.currency.toUpperCase() === "USD" ? "USD" : "USD",
     shirtColor: row.shirt_color,
     palette: Array.isArray(row.palette_json) ? row.palette_json : [],
@@ -166,7 +166,7 @@ export async function upsertDailyProduct(product: DemoProduct) {
         printify_variants_json: product.printifyVariants ?? null,
         printify_sync_status: product.printifySyncStatus ?? null,
         printify_synced_at: product.printifySyncedAt ?? null,
-        price_cents: product.priceCents,
+        price_cents: productPriceCents,
         currency: product.currency.toLowerCase(),
         status: "active",
         updated_at: new Date().toISOString(),

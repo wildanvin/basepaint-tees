@@ -41,13 +41,13 @@ function statusTitle(status?: string) {
     case "simulated_fulfillment":
       return "Order queued";
     case "printful_draft_created":
-      return "Legacy draft created";
+      return "Order queued";
     case "printify_order_created":
-      return "Printify order created";
+      return "Order queued";
     case "printify_sent_to_production":
-      return "Printify production started";
+      return "Production started";
     case "fulfillment_failed":
-      return "Fulfillment needs review";
+      return "Order needs review";
     default:
       return "Checking order";
   }
@@ -106,7 +106,7 @@ export function OrderStatusPanel({
         {statusTitle(order?.status)}
       </h1>
       <p className="mt-4 text-lg leading-8 text-[#4a4a4a]">
-        This page updates automatically after the Base payment is detected.
+        This page updates automatically after your Base payment is confirmed.
       </p>
 
       {error ? (
@@ -121,29 +121,23 @@ export function OrderStatusPanel({
             <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
               Status
             </dt>
-            <dd className="mt-1 text-lg font-semibold">{order.status}</dd>
+            <dd className="mt-1 text-lg font-semibold">{statusTitle(order.status)}</dd>
           </div>
           <div>
             <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
               Payment
             </dt>
             <dd className="mt-1 break-all">
-              {order.paymentTxHash ?? `${order.displayAmountEth ?? "Exact"} ETH pending`}
+              {order.paymentTxHash
+                ? "Confirmed on Base"
+                : `${order.displayAmountEth ?? "Exact"} ETH pending`}
             </dd>
           </div>
           <div>
             <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
-              Receiver
+              Production
             </dt>
-            <dd className="mt-1 break-all">{order.receiverAddress ?? "Pending"}</dd>
-          </div>
-          <div>
-            <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
-              Fulfillment
-            </dt>
-            <dd className="mt-1 break-all">
-              {order.fulfillmentOrderId ?? order.fulfillmentError ?? "Waiting for payment"}
-            </dd>
+            <dd className="mt-1">{statusTitle(order.status)}</dd>
           </div>
           {order.expiresAt ? (
             <div>

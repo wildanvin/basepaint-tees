@@ -1,5 +1,7 @@
 export type ShirtSize = "S" | "M" | "L" | "XL" | "2XL";
 
+export const productPriceCents = 2500;
+
 export type DemoProduct = {
   id: string;
   basepaintDay: number;
@@ -36,7 +38,7 @@ export const demoProduct: DemoProduct = {
   basepaintDay: 1024,
   theme: "Chromatic Relay",
   name: "BasePaint #1024 Tee",
-  priceCents: 4200,
+  priceCents: productPriceCents,
   currency: "USD",
   shirtColor: "Black",
   palette: ["#111111", "#f7f3e8", "#41c7ff", "#ff4d6d", "#f9c74f"],

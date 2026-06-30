@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { Address } from "viem";
+import { useConnection, useConnect, useSendTransaction, useSwitchChain } from "wagmi";
 import {
   CheckoutAddressForm,
   type CheckoutFormState,
@@ -12,6 +14,8 @@ import {
 } from "@/components/checkout-summary";
 import type { DemoProduct, ShirtSize } from "@/lib/demo-product";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { baseChain } from "@/lib/wagmi-config";
+import { findAvailableConnector, getWalletErrorMessage } from "@/lib/wallet-connector";
 import {
   normalizeWalletAddress,
   walletAddressFromIdentityData,
@@ -22,28 +26,6 @@ type CheckoutModalProps = {
   onClose: () => void;
   product: DemoProduct;
   selectedSize: ShirtSize;
-};
-
-type EthereumProvider = {
-  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-};
-
-declare global {
-  interface Window {
-    ethereum?: EthereumProvider;
-  }
-}
-
-const baseChain = {
-  chainId: "0x2105",
-  chainName: "Base",
-  nativeCurrency: {
-    name: "Ether",
-    symbol: "ETH",
-    decimals: 18,
-  },
-  rpcUrls: ["https://mainnet.base.org"],
-  blockExplorerUrls: ["https://basescan.org"],
 };
 
 const initialForm: CheckoutFormState = {
@@ -57,10 +39,6 @@ const initialForm: CheckoutFormState = {
   postalCode: "",
   country: "US",
 };
-
-function weiToHex(value: string) {
-  return `0x${BigInt(value).toString(16)}`;
-}
 
 function walletFromUser(user: {
   identities?: Array<{ identity_data?: Record<string, unknown> }>;
@@ -85,6 +63,11 @@ export function CheckoutModal({
   const [quote, setQuote] = useState<CheckoutQuoteResponse>();
   const [error, setError] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const { address, chainId, isConnected } = useConnection();
+  const { connectAsync, connectors } = useConnect();
+  const { sendTransactionAsync } = useSendTransaction();
+  const { switchChainAsync } = useSwitchChain();
   const supabase = getSupabaseBrowser();
 
   if (!isOpen) {
@@ -96,6 +79,7 @@ export function CheckoutModal({
     setQuote(undefined);
     setError(undefined);
     setIsLoading(false);
+    setIsSignedIn(false);
     onClose();
   }
 
@@ -149,11 +133,6 @@ export function CheckoutModal({
       return;
     }
 
-    if (!window.ethereum) {
-      setError("No wallet found. Install a wallet that supports Base.");
-      return;
-    }
-
     setError(undefined);
     setIsLoading(true);
 
@@ -166,10 +145,21 @@ export function CheckoutModal({
         throw new Error("Sign in with Ethereum before payment.");
       }
 
-      const accounts = (await window.ethereum.request({
-        method: "eth_requestAccounts",
-      })) as string[];
-      const walletAddress = normalizeWalletAddress(accounts[0]);
+      let walletAddress = normalizeWalletAddress(address);
+
+      if (!isConnected || !walletAddress) {
+        const { connector: activeConnector } = await findAvailableConnector(
+          undefined,
+          connectors,
+        );
+
+        const connection = await connectAsync({
+          connector: activeConnector,
+          chainId: baseChain.id,
+        });
+        walletAddress = normalizeWalletAddress(connection.accounts[0]);
+      }
+
       const signedWallet = walletFromUser(user);
 
       if (!walletAddress) {
@@ -180,16 +170,8 @@ export function CheckoutModal({
         throw new Error("Connected wallet does not match the signed-in wallet.");
       }
 
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: baseChain.chainId }],
-        });
-      } catch {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [baseChain],
-        });
+      if (chainId !== baseChain.id) {
+        await switchChainAsync({ chainId: baseChain.id });
       }
 
       const response = await fetch("/api/checkout", {
@@ -220,20 +202,15 @@ export function CheckoutModal({
         throw new Error(checkout.error ?? "Unable to create payment order.");
       }
 
-      await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            from: accounts[0],
-            to: checkout.receiverAddress,
-            value: weiToHex(checkout.expectedAmountWei),
-          },
-        ],
+      await sendTransactionAsync({
+        chainId: baseChain.id,
+        to: checkout.receiverAddress as Address,
+        value: BigInt(checkout.expectedAmountWei),
       });
 
       window.location.href = checkout.orderUrl;
     } catch (walletError) {
-      setError(walletError instanceof Error ? walletError.message : "Wallet payment failed.");
+      setError(getWalletErrorMessage(walletError));
       setIsLoading(false);
     }
   }
@@ -281,7 +258,9 @@ export function CheckoutModal({
           ) : quote ? (
             <CheckoutSummary
               isLoading={isLoading}
+              isSignedIn={isSignedIn}
               onBack={() => setStep("shipping")}
+              onAuthChange={setIsSignedIn}
               onPay={payWithWallet}
               quote={quote}
               selectedSize={selectedSize}

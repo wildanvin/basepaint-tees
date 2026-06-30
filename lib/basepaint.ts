@@ -1,4 +1,4 @@
-import { demoProduct, type DemoProduct } from "@/lib/demo-product";
+import { demoProduct, productPriceCents, type DemoProduct } from "@/lib/demo-product";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -16,7 +16,6 @@ type GraphqlResponse<T> = {
 
 const allowedShirtColors = [
   { name: "Black", hex: "#111111" },
-  { name: "White", hex: "#ffffff" },
   { name: "Navy", hex: "#1f2a44" },
   { name: "Dark Grey Heather", hex: "#4a4a4a" },
   { name: "Athletic Heather", hex: "#c8c8c8" },
@@ -345,6 +344,7 @@ function buildProduct(day: number, metadata: UnknownRecord): DemoProduct {
     basepaintDay: day,
     theme,
     name: `BasePaint #${day} Tee`,
+    priceCents: productPriceCents,
     shirtColor: pickShirtColor(palette, day),
     palette: palette.length > 0 ? palette : demoProduct.palette,
     artUrl,
@@ -384,6 +384,7 @@ function buildGraphqlProduct(
     basepaintDay: canvas.id,
     theme,
     name: `BasePaint #${canvas.id} Tee`,
+    priceCents: productPriceCents,
     shirtColor: pickShirtColor(canvas.palette, canvas.id),
     palette: canvas.palette.length > 0 ? canvas.palette : demoProduct.palette,
     artUrl: `https://basepaint.xyz/api/art/image?day=${canvas.id}`,

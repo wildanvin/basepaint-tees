@@ -108,6 +108,19 @@ function formatEth(wei: bigint) {
   return fraction ? `${whole}.${fraction}` : whole.toString();
 }
 
+function formatDisplayEth(wei: bigint) {
+  const formatted = formatEth(wei);
+  const [whole, fraction] = formatted.split(".");
+
+  if (!fraction) {
+    return whole;
+  }
+
+  const compactFraction = fraction.slice(0, 4).replace(/0+$/, "");
+
+  return compactFraction ? `${whole}.${compactFraction}` : whole;
+}
+
 function decimalEthToWei(value: string) {
   const [wholePart, fractionPart = ""] = value.split(".");
   const whole = BigInt(wholePart || "0") * weiPerEth;
@@ -116,23 +129,41 @@ function decimalEthToWei(value: string) {
   return whole + fraction;
 }
 
-function usdCentsToWei(priceCents: number, ethUsdPrice: string) {
-  const price = Number.parseFloat(ethUsdPrice);
+function decimalUsdToUnits(value: string) {
+  const normalized = value.trim();
 
-  if (!Number.isFinite(price) || price <= 0) {
+  if (!/^\d+(\.\d+)?$/.test(normalized)) {
     throw new Error("Invalid ETH/USD price.");
   }
 
-  const eth = priceCents / 100 / price;
+  const [wholePart, fractionPart = ""] = normalized.split(".");
+  const scale = BigInt(10) ** BigInt(fractionPart.length);
+  const units = BigInt(wholePart) * scale + BigInt(fractionPart || "0");
 
-  return decimalEthToWei(eth.toFixed(18));
+  if (units <= 0) {
+    throw new Error("Invalid ETH/USD price.");
+  }
+
+  return { units, scale };
+}
+
+function usdCentsToWei(priceCents: number, ethUsdPrice: string) {
+  if (!Number.isInteger(priceCents) || priceCents <= 0) {
+    throw new Error("Invalid USD price.");
+  }
+
+  const { units: ethUsdUnits, scale } = decimalUsdToUnits(ethUsdPrice);
+  const numerator = BigInt(priceCents) * scale * weiPerEth;
+  const denominator = BigInt(100) * ethUsdUnits;
+
+  if (denominator <= 0) {
+    throw new Error("Invalid ETH/USD price.");
+  }
+
+  return (numerator + denominator - BigInt(1)) / denominator;
 }
 
 export async function getEthUsdPrice() {
-  if (process.env.ETH_USD_PRICE) {
-    return process.env.ETH_USD_PRICE;
-  }
-
   const response = await fetch(
     `https://api.g.alchemy.com/prices/v1/${getAlchemyApiKey()}/tokens/by-symbol?symbols=ETH`,
     { cache: "no-store" },
@@ -170,7 +201,7 @@ export async function createCheckoutQuote({
 
   return {
     expectedAmountWei: expectedAmountWei.toString(),
-    displayAmountEth: formatEth(expectedAmountWei),
+    displayAmountEth: formatDisplayEth(expectedAmountWei),
     ethUsdPrice,
     receiverAddress: getPaymentReceiverAddress(),
     chainId: BASE_CHAIN_ID,
@@ -188,7 +219,7 @@ export async function createEstimatedCheckoutQuote({
   const expectedAmountWei = usdCentsToWei(priceCents, ethUsdPrice);
 
   return {
-    displayAmountEth: formatEth(expectedAmountWei),
+    displayAmountEth: formatDisplayEth(expectedAmountWei),
     ethUsdPrice,
     chainId: BASE_CHAIN_ID,
   };

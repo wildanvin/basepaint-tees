@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type MouseEvent, useMemo, useState } from "react";
+import { type MouseEvent, type PointerEvent, useMemo, useState } from "react";
 import type { DemoProduct } from "@/lib/demo-product";
 
 type Slide = {
@@ -9,7 +9,34 @@ type Slide = {
   src?: string;
   alt: string;
   fallbackSide?: "front" | "back";
+  key: string;
 };
+
+function displayLabel(label: string, cameraLabel?: string) {
+  const value = (cameraLabel ?? label).toLowerCase();
+
+  if (value.includes("person-7-back") || value.includes("person 7 back")) {
+    return "Back view";
+  }
+
+  if (value.includes("person-2") || value.includes("person 2")) {
+    return "On body";
+  }
+
+  if (value.includes("person-3") || value.includes("person 3")) {
+    return "Styled";
+  }
+
+  if (value.includes("duo")) {
+    return "Together";
+  }
+
+  if (value.includes("size-chart") || value.includes("size chart")) {
+    return "Size chart";
+  }
+
+  return label;
+}
 
 function FallbackMockup({ product, side }: { product: DemoProduct; side: "front" | "back" }) {
   return (
@@ -61,29 +88,33 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
   const slides = useMemo<Slide[]>(
     () => [
       ...(product.mockups?.map((mockup) => ({
-        label: mockup.label,
+        label: displayLabel(mockup.label, mockup.cameraLabel),
         src: mockup.src,
-        alt: `${product.name} ${mockup.label.toLowerCase()} mockup`,
-        fallbackSide: mockup.label.toLowerCase().includes("back")
+        alt: `${product.name} ${displayLabel(mockup.label, mockup.cameraLabel).toLowerCase()} view`,
+        fallbackSide: displayLabel(mockup.label, mockup.cameraLabel).toLowerCase().includes("back")
           ? ("back" as const)
           : ("front" as const),
+        key: mockup.cameraLabel ?? mockup.label,
       })) ?? []),
       ...(!product.mockups?.length
         ? [
             {
               label: "Front",
               src: product.mockupFrontUrl,
-              alt: `${product.name} front mockup`,
+              alt: `${product.name} front view`,
               fallbackSide: "front" as const,
+              key: "front",
             },
             {
               label: "Back",
               src: product.mockupBackUrl,
-              alt: `${product.name} back mockup`,
+              alt: `${product.name} back view`,
               fallbackSide: "back" as const,
+              key: "back",
             },
           ]
         : []),
@@ -107,14 +138,37 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
     });
   }
 
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+
+    setSwipeStartX(event.clientX);
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (swipeStartX === null) {
+      return;
+    }
+
+    const deltaX = event.clientX - swipeStartX;
+    setSwipeStartX(null);
+
+    if (Math.abs(deltaX) < 45) {
+      return;
+    }
+
+    goTo(activeIndex + (deltaX < 0 ? 1 : -1));
+  }
+
   return (
     <section className="overflow-hidden border border-[#171717] bg-[#f7f4ee] shadow-[8px_8px_0_#171717]">
       <div className="flex items-center justify-between border-b border-[#171717]/15 bg-white px-4 py-3 text-[#171717]">
         <span className="text-xs font-semibold uppercase tracking-[0.16em]">
-          {activeSlide.label} mockup
+          {activeSlide.label}
         </span>
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
-          {product.shirtColor}
+          {activeIndex + 1} / {slides.length}
         </span>
       </div>
 
@@ -123,13 +177,19 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
         onMouseEnter={() => setIsZooming(true)}
         onMouseLeave={() => setIsZooming(false)}
         onMouseMove={updateZoomPosition}
+        onPointerCancel={() => setSwipeStartX(null)}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
       >
         <div
           className="flex h-[560px] transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${activeIndex * 100}%)` }}
         >
           {slides.map((slide) => (
-            <div className="relative min-w-full cursor-zoom-in bg-[#f7f4ee]" key={slide.label}>
+            <div
+              className="relative min-w-full cursor-zoom-in select-none bg-[#f7f4ee]"
+              key={slide.key}
+            >
               {slide.src ? (
                 <Image
                   src={slide.src}
@@ -171,7 +231,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
         ) : null}
 
         <button
-          aria-label="Previous mockup"
+          aria-label="Previous product view"
           className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[#171717]/20 bg-white/85 text-2xl text-[#171717] shadow-sm"
           onClick={() => goTo(activeIndex - 1)}
           type="button"
@@ -179,7 +239,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
           ‹
         </button>
         <button
-          aria-label="Next mockup"
+          aria-label="Next product view"
           className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[#171717]/20 bg-white/85 text-2xl text-[#171717] shadow-sm"
           onClick={() => goTo(activeIndex + 1)}
           type="button"
@@ -191,13 +251,13 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
       <div className="flex flex-wrap items-center justify-center gap-2 border-t border-[#171717]/15 bg-white px-4 py-3">
         {slides.map((slide, index) => (
           <button
-            aria-label={`Show ${slide.label.toLowerCase()} mockup`}
+            aria-label={`Show ${slide.label.toLowerCase()} view`}
             className={`min-h-8 border border-[#171717]/40 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${
               activeIndex === index
                 ? "bg-[#171717] text-white"
                 : "bg-transparent text-[#171717]"
             }`}
-            key={slide.label}
+            key={slide.key}
             onClick={() => goTo(index)}
             type="button"
           >

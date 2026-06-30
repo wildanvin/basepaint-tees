@@ -11,6 +11,31 @@ function shortAddress(address?: string | null) {
   return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Unknown";
 }
 
+function orderStatusLabel(status: string) {
+  switch (status) {
+    case "pending_payment":
+      return "Waiting for payment";
+    case "paid":
+      return "Payment confirmed";
+    case "simulated_fulfillment":
+    case "printful_draft_created":
+    case "printify_order_created":
+      return "Order queued";
+    case "printify_sent_to_production":
+      return "Production started";
+    case "fulfillment_failed":
+      return "Needs review";
+    case "expired":
+      return "Expired";
+    case "cancelled":
+      return "Cancelled";
+    case "refunded":
+      return "Refunded";
+    default:
+      return "Processing";
+  }
+}
+
 export default async function AccountPage() {
   const user = await getAuthenticatedUser();
 
@@ -85,7 +110,7 @@ export default async function AccountPage() {
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm font-semibold uppercase tracking-[0.14em]">
-                    {order.status} · {order.size}
+                    {orderStatusLabel(order.status)} · {order.size}
                   </p>
                   <time className="text-xs uppercase tracking-[0.14em] text-[#696969]">
                     {new Date(order.createdAt).toLocaleString()}
@@ -107,14 +132,14 @@ export default async function AccountPage() {
                       Payment
                     </dt>
                     <dd className="break-all">
-                      {order.paymentTxHash ?? order.displayAmountEth ?? "Pending"}
+                      {order.paymentTxHash ? "Confirmed on Base" : order.displayAmountEth ?? "Pending"}
                     </dd>
                   </div>
                   <div>
                     <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
-                      Fulfillment
+                      Production
                     </dt>
-                    <dd>{order.fulfillmentOrderId ?? order.fulfillmentError ?? "Pending"}</dd>
+                    <dd>{orderStatusLabel(order.status)}</dd>
                   </div>
                   <div>
                     <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">

@@ -1,25 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { EthereumWallet } from "@supabase/auth-js";
 import type { User } from "@supabase/supabase-js";
+import { useConnection, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { baseChain } from "@/lib/wagmi-config";
+import { findAvailableConnector, getWalletErrorMessage } from "@/lib/wallet-connector";
 import {
   normalizeWalletAddress,
   walletAddressFromIdentityData,
 } from "@/lib/wallet-address";
 
-type EthereumProvider = {
-  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
-};
-
-declare global {
-  interface Window {
-    ethereum?: EthereumProvider;
-  }
-}
-
 const baseChainId = 8453;
+
+type AccountButtonProps = {
+  tone?: "light" | "dark";
+  variant?: "link" | "button";
+  onAuthChange?: (isSignedIn: boolean) => void;
+};
 
 function shortAddress(address?: string | null) {
   return address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Account";
@@ -37,39 +37,26 @@ function walletFromUser(user?: User | null) {
   );
 }
 
-async function switchToBase() {
-  if (!window.ethereum) {
-    throw new Error("No wallet found. Install a wallet that supports Base.");
-  }
-
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x2105" }],
-    });
-  } catch {
-    await window.ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [
-        {
-          chainId: "0x2105",
-          chainName: "Base",
-          nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-          rpcUrls: ["https://mainnet.base.org"],
-          blockExplorerUrls: ["https://basescan.org"],
-        },
-      ],
-    });
-  }
-}
-
-export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
+export function AccountButton({
+  tone = "light",
+  variant = "link",
+  onAuthChange,
+}: AccountButtonProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const { address, chainId, connector, isConnected } = useConnection();
+  const { connectAsync, connectors } = useConnect();
+  const { disconnectAsync } = useDisconnect();
+  const { switchChainAsync } = useSwitchChain();
   const supabase = getSupabaseBrowser();
   const walletAddress = walletFromUser(user);
   const isDark = tone === "dark";
+  const onAuthChangeRef = useRef(onAuthChange);
+
+  useEffect(() => {
+    onAuthChangeRef.current = onAuthChange;
+  }, [onAuthChange]);
 
   useEffect(() => {
     let isMounted = true;
@@ -77,6 +64,7 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
     supabase.auth.getUser().then(({ data }) => {
       if (isMounted) {
         setUser(data.user);
+        onAuthChangeRef.current?.(Boolean(data.user));
         setIsLoading(false);
       }
     });
@@ -85,6 +73,7 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      onAuthChangeRef.current?.(Boolean(session?.user));
       setIsLoading(false);
     });
 
@@ -99,10 +88,22 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
     setIsLoading(true);
 
     try {
-      await switchToBase();
+      const { connector: activeConnector, provider } = await findAvailableConnector(
+        connector,
+        connectors,
+      );
+
+      const connection = isConnected
+        ? { accounts: address ? [address] : [] }
+        : await connectAsync({ connector: activeConnector, chainId: baseChain.id });
+
+      if (chainId !== baseChain.id) {
+        await switchChainAsync({ chainId: baseChain.id });
+      }
 
       const { data, error: signInError } = await supabase.auth.signInWithWeb3({
         chain: "ethereum",
+        wallet: provider as EthereumWallet,
         statement: "Sign in to BasePaint Tees on Base.",
         options: {
           signInWithEthereum: {
@@ -115,19 +116,15 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
         throw signInError;
       }
 
-      const accounts = (await window.ethereum?.request({
-        method: "eth_requestAccounts",
-      })) as string[] | undefined;
-
       await fetch("/api/account/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: accounts?.[0] }),
+        body: JSON.stringify({ walletAddress: connection.accounts[0] }),
       });
 
       setUser(data.user);
     } catch (signInError) {
-      setError(signInError instanceof Error ? signInError.message : "Unable to sign in.");
+      setError(getWalletErrorMessage(signInError));
     } finally {
       setIsLoading(false);
     }
@@ -137,9 +134,26 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
     setError(undefined);
     setIsLoading(true);
     await supabase.auth.signOut();
+    if (isConnected) {
+      await disconnectAsync();
+    }
     setUser(null);
     setIsLoading(false);
   }
+
+  const buttonClass =
+    variant === "button"
+      ? "min-h-12 border border-[#171717] bg-[#171717] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2b2b2b] disabled:cursor-wait disabled:bg-[#696969]"
+      : `text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4 ${
+          isDark ? "text-white" : "text-[#171717]"
+        } disabled:opacity-60`;
+
+  const secondaryButtonClass =
+    variant === "button"
+      ? "text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4 text-[#4a4a4a]"
+      : `text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4 ${
+          isDark ? "text-white/70" : "text-[#4a4a4a]"
+        }`;
 
   if (user) {
     return (
@@ -153,9 +167,7 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
           {shortAddress(walletAddress)}
         </Link>
         <button
-          className={`text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4 ${
-            isDark ? "text-white/70" : "text-[#4a4a4a]"
-          }`}
+          className={secondaryButtonClass}
           disabled={isLoading}
           onClick={signOut}
           type="button"
@@ -167,11 +179,9 @@ export function AccountButton({ tone = "light" }: { tone?: "light" | "dark" }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className={`flex flex-col gap-1 ${variant === "button" ? "items-stretch" : "items-end"}`}>
       <button
-        className={`text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4 ${
-          isDark ? "text-white" : "text-[#171717]"
-        } disabled:opacity-60`}
+        className={buttonClass}
         disabled={isLoading}
         onClick={signIn}
         type="button"
