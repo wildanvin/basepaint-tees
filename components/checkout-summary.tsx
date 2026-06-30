@@ -1,28 +1,33 @@
 "use client";
 
+import { AccountButton } from "@/components/account-button";
 import type { ShirtSize } from "@/lib/demo-product";
 
-export type CheckoutResponse = {
-  orderId: string;
-  paymentReference: string;
-  orderUrl: string;
+export type CheckoutQuoteResponse = {
   productName: string;
   productPrice: string;
   shippingPrice: string;
   fiatPrice: string;
   shippingCostCents: number;
   totalPriceCents: number;
-  receiverAddress: string;
   chainId: number;
-  expectedAmountWei: string;
   displayAmountEth: string;
   ethUsdPrice: string;
+  error?: string;
+};
+
+export type CheckoutResponse = CheckoutQuoteResponse & {
+  orderId: string;
+  paymentReference: string;
+  orderUrl: string;
+  receiverAddress: string;
+  expectedAmountWei: string;
   expiresAt: string;
   error?: string;
 };
 
 type CheckoutSummaryProps = {
-  checkout: CheckoutResponse;
+  quote: CheckoutQuoteResponse;
   isLoading: boolean;
   selectedSize: ShirtSize;
   shirtColor: string;
@@ -32,7 +37,7 @@ type CheckoutSummaryProps = {
 };
 
 export function CheckoutSummary({
-  checkout,
+  quote,
   isLoading,
   selectedSize,
   shirtColor,
@@ -46,7 +51,7 @@ export function CheckoutSummary({
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
           Order summary
         </p>
-        <h3 className="mt-2 text-2xl font-semibold">{checkout.productName}</h3>
+        <h3 className="mt-2 text-2xl font-semibold">{quote.productName}</h3>
         <p className="mt-1 text-sm text-[#4a4a4a]">
           {theme} / {shirtColor} / {selectedSize}
         </p>
@@ -54,28 +59,31 @@ export function CheckoutSummary({
         <div className="mt-4 grid gap-2 text-sm">
           <div className="flex justify-between gap-4">
             <span>Product</span>
-            <span className="font-semibold">{checkout.productPrice}</span>
+            <span className="font-semibold">{quote.productPrice}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span>Shipping</span>
-            <span className="font-semibold">{checkout.shippingPrice}</span>
+            <span className="font-semibold">{quote.shippingPrice}</span>
           </div>
           <div className="flex justify-between gap-4 border-t border-[#171717]/15 pt-2 text-base">
             <span>Total</span>
-            <span className="font-semibold">{checkout.fiatPrice}</span>
+            <span className="font-semibold">{quote.fiatPrice}</span>
           </div>
         </div>
       </div>
 
       <div className="grid gap-2 text-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
-          Base payment
+          Sign in and pay on Base
         </p>
-        <p className="text-3xl font-semibold">{checkout.displayAmountEth} ETH</p>
-        <p className="break-all text-[#4a4a4a]">To: {checkout.receiverAddress}</p>
+        <p className="text-3xl font-semibold">~{quote.displayAmountEth} ETH</p>
         <p className="text-[#4a4a4a]">
-          Expires: {new Date(checkout.expiresAt).toLocaleString()}
+          Sign in with Ethereum on Base, then the final exact amount and order reference
+          will be created.
         </p>
+        <div className="mt-2 justify-self-start">
+          <AccountButton />
+        </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-[0.7fr_1fr]">

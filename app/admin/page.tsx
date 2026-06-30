@@ -1,14 +1,44 @@
 import Link from "next/link";
+import { AccountButton } from "@/components/account-button";
 import { AdminAgentPanel } from "@/components/admin-agent-panel";
 import { AdminOrderActions } from "@/components/admin-order-actions";
 import { getDailyProduct } from "@/lib/basepaint";
 import { formatPrice } from "@/lib/demo-product";
 import { getFulfillmentMode, getRecentOrders } from "@/lib/order-store";
 import { getActiveProduct, getRecentAgentRuns } from "@/lib/product-store";
+import { requireAdminUser } from "@/lib/supabase-auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  const { user, isAdmin } = await requireAdminUser();
+
+  if (!user || !isAdmin) {
+    return (
+      <main className="min-h-screen bg-[#111111] px-6 py-12 text-white">
+        <section className="mx-auto max-w-3xl border border-white/20 p-8">
+          <Link className="text-sm font-bold uppercase tracking-[0.18em]" href="/">
+            BasePaint Tees
+          </Link>
+          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#ff4d6d]">
+            Internal dashboard
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            {user ? "Access denied" : "Admin sign in required"}
+          </h1>
+          <p className="mt-4 text-white/65">
+            {user
+              ? "Your account is not listed in admin_roles."
+              : "Sign in with the admin wallet, then add that user id to admin_roles."}
+          </p>
+          <div className="mt-6">
+            <AccountButton tone="dark" />
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const [storedProduct, runs, orders] = await Promise.all([
     getActiveProduct().catch(() => undefined),
     getRecentAgentRuns().catch(() => []),
@@ -46,6 +76,7 @@ export default async function AdminPage() {
           >
             View storefront
           </Link>
+          <AccountButton tone="dark" />
         </div>
 
         <div className="mt-8 overflow-hidden border border-white/20">

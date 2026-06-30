@@ -1,8 +1,15 @@
 import { getRecentReceiverTransfers, matchAndConfirmTransfer } from "@/lib/base-payments";
 import { fulfillPaidOrder } from "@/lib/fulfillment";
+import { requireAdminUser } from "@/lib/supabase-auth";
 
 export async function POST() {
   try {
+    const { isAdmin } = await requireAdminUser();
+
+    if (!isAdmin) {
+      return Response.json({ error: "Admin access required." }, { status: 403 });
+    }
+
     const transfers = await getRecentReceiverTransfers();
     const results = [];
 

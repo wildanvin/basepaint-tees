@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { DemoProduct } from "@/lib/demo-product";
+import { AccountButton } from "@/components/account-button";
 import { ProductCarousel } from "@/components/product-carousel";
 import { ProductDetails } from "@/components/product-details";
 
@@ -11,12 +12,15 @@ export function ProductExperience({ product }: { product: DemoProduct }) {
           <Link className="text-sm font-bold uppercase tracking-[0.18em]" href="/">
             BasePaint Tees
           </Link>
-          <Link
-            className="text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4"
-            href="/admin"
-          >
-            Admin
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              className="text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4"
+              href="/admin"
+            >
+              Admin
+            </Link>
+            <AccountButton />
+          </div>
         </nav>
       </header>
 

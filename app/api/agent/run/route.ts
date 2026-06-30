@@ -3,9 +3,16 @@ import { ensurePrintifyProduct } from "@/lib/printify";
 import { getProductByBasepaintDay, recordAgentRun, upsertDailyProduct } from "@/lib/product-store";
 import { generatePrintAssets } from "@/lib/print-assets";
 import { uploadGeneratedAssets } from "@/lib/supabase-assets";
+import { requireAdminUser } from "@/lib/supabase-auth";
 
 export async function POST() {
   try {
+    const { isAdmin } = await requireAdminUser();
+
+    if (!isAdmin) {
+      return Response.json({ error: "Admin access required." }, { status: 403 });
+    }
+
     const product = await getDailyProduct();
     const existingProduct = await getProductByBasepaintDay(product.basepaintDay);
     const productForSync = {

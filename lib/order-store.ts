@@ -31,6 +31,7 @@ export type PaymentStatus = "pending" | "confirmed" | "expired" | "failed";
 export type OrderRecord = {
   id: string;
   dailyProductId: string | null;
+  userId: string | null;
   fulfillmentOrderId: string | null;
   customerEmail: string | null;
   customerName: string | null;
@@ -56,6 +57,7 @@ export type OrderRecord = {
   ethUsdPrice: string | null;
   receivedAmountWei: string | null;
   payerAddress: string | null;
+  authWalletAddress: string | null;
   paymentTxHash: string | null;
   paidAt: string | null;
   expiresAt: string | null;
@@ -67,6 +69,7 @@ export type OrderRecord = {
 type OrderRow = {
   id: string;
   daily_product_id: string | null;
+  user_id: string | null;
   fulfillment_order_id: string | null;
   customer_email: string | null;
   customer_name: string | null;
@@ -92,6 +95,7 @@ type OrderRow = {
   eth_usd_price: string | null;
   received_amount_wei: string | null;
   payer_address: string | null;
+  auth_wallet_address: string | null;
   payment_tx_hash: string | null;
   paid_at: string | null;
   expires_at: string | null;
@@ -102,6 +106,8 @@ type OrderRow = {
 
 type CreatePaymentOrderInput = {
   dailyProductId: string;
+  userId: string;
+  authWalletAddress: string;
   customerEmail: string;
   customerName: string;
   shipping: ShippingAddress;
@@ -151,6 +157,7 @@ function orderFromRow(row: OrderRow): OrderRecord {
   return {
     id: row.id,
     dailyProductId: row.daily_product_id,
+    userId: row.user_id,
     fulfillmentOrderId: row.fulfillment_order_id,
     customerEmail: row.customer_email,
     customerName: row.customer_name,
@@ -176,6 +183,7 @@ function orderFromRow(row: OrderRow): OrderRecord {
     ethUsdPrice: row.eth_usd_price,
     receivedAmountWei: row.received_amount_wei,
     payerAddress: row.payer_address,
+    authWalletAddress: row.auth_wallet_address,
     paymentTxHash: row.payment_tx_hash,
     paidAt: row.paid_at,
     expiresAt: row.expires_at,
@@ -195,6 +203,7 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput) {
     .from("orders")
     .insert({
       daily_product_id: input.dailyProductId,
+      user_id: input.userId,
       fulfillment_order_id: null,
       customer_email: input.customerEmail,
       customer_name: input.customerName,
@@ -215,6 +224,7 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput) {
       payment_status: "pending",
       chain_id: input.chainId,
       receiver_address: input.receiverAddress.toLowerCase(),
+      auth_wallet_address: input.authWalletAddress.toLowerCase(),
       expected_amount_wei: input.expectedAmountWei,
       display_amount_eth: input.displayAmountEth,
       eth_usd_price: input.ethUsdPrice,
@@ -385,6 +395,21 @@ export async function getRecentOrders() {
 
   if (error) {
     throw new Error(`Failed to load orders: ${error.message}`);
+  }
+
+  return (data as OrderRow[]).map(orderFromRow);
+}
+
+export async function getOrdersByUserId(userId: string) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load account orders: ${error.message}`);
   }
 
   return (data as OrderRow[]).map(orderFromRow);

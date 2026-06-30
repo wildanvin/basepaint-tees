@@ -31,6 +31,7 @@ CONSTRAINT daily_products_pkey PRIMARY KEY (id)
 CREATE TABLE public.orders (
 id uuid NOT NULL DEFAULT gen_random_uuid(),
 daily_product_id uuid,
+user_id uuid,
 stripe_session_id text UNIQUE,
 stripe_payment_intent_id text,
 fulfillment_order_id text,
@@ -58,6 +59,7 @@ display_amount_eth text,
 eth_usd_price text,
 received_amount_wei text,
 payer_address text,
+auth_wallet_address text,
 payment_tx_hash text UNIQUE,
 paid_at timestamp with time zone,
 expires_at timestamp with time zone,
@@ -65,7 +67,24 @@ fulfillment_error text,
 created_at timestamp with time zone DEFAULT now(),
 updated_at timestamp with time zone DEFAULT now(),
 CONSTRAINT orders_pkey PRIMARY KEY (id),
+CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
 CONSTRAINT orders_daily_product_id_fkey FOREIGN KEY (daily_product_id) REFERENCES public.daily_products(id)
+);
+CREATE TABLE public.user_profiles (
+user_id uuid NOT NULL,
+wallet_address text NOT NULL,
+created_at timestamp with time zone NOT NULL DEFAULT now(),
+updated_at timestamp with time zone NOT NULL DEFAULT now(),
+CONSTRAINT user_profiles_pkey PRIMARY KEY (user_id),
+CONSTRAINT user_profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.admin_roles (
+user_id uuid NOT NULL,
+role text NOT NULL DEFAULT 'admin'::text,
+created_at timestamp with time zone NOT NULL DEFAULT now(),
+updated_at timestamp with time zone NOT NULL DEFAULT now(),
+CONSTRAINT admin_roles_pkey PRIMARY KEY (user_id),
+CONSTRAINT admin_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.payment_events (
 id uuid NOT NULL DEFAULT gen_random_uuid(),

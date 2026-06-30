@@ -13,12 +13,15 @@ import {
 } from "@/lib/order-store";
 import { calculatePrintifyShipping } from "@/lib/printify";
 import { getActiveProduct } from "@/lib/product-store";
+import { getAuthenticatedUser, syncUserProfile } from "@/lib/supabase-auth";
+import { normalizeWalletAddress } from "@/lib/wallet-address";
 
 type CheckoutInput = {
   dailyProductId?: string;
   size?: ShirtSize;
   customerEmail?: string;
   customerName?: string;
+  walletAddress?: string;
   shipping?: Partial<ShippingAddress>;
 };
 
@@ -72,7 +75,12 @@ function validateShipping(input: CheckoutInput["shipping"]): ShippingAddress {
 export async function POST(request: Request) {
   try {
     const input = (await request.json()) as CheckoutInput;
+    const user = await getAuthenticatedUser();
     const product = await getActiveProduct();
+
+    if (!user) {
+      return Response.json({ error: "Sign in with Ethereum before payment." }, { status: 401 });
+    }
 
     if (!product) {
       return Response.json(
@@ -98,6 +106,14 @@ export async function POST(request: Request) {
 
     const customerEmail = validateText(input.customerEmail, "Email");
     const customerName = validateText(input.customerName, "Full name");
+    const walletAddress = normalizeWalletAddress(input.walletAddress);
+
+    if (!walletAddress) {
+      return Response.json({ error: "Connected wallet address is required." }, { status: 400 });
+    }
+
+    await syncUserProfile({ user, walletAddress });
+
     const shipping = validateShipping(input.shipping);
     const fulfillmentQuote = await calculatePrintifyShipping({
       product,
@@ -113,6 +129,8 @@ export async function POST(request: Request) {
     });
     const order = await createPaymentOrder({
       dailyProductId: product.id,
+      userId: user.id,
+      authWalletAddress: walletAddress,
       customerEmail,
       customerName,
       shipping,

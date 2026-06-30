@@ -1,5 +1,6 @@
 import { getOrderById, updateOrderFulfillment } from "@/lib/order-store";
 import { sendPrintifyOrderToProduction } from "@/lib/printify";
+import { requireAdminUser } from "@/lib/supabase-auth";
 
 type SendToProductionInput = {
   orderId?: string;
@@ -7,6 +8,12 @@ type SendToProductionInput = {
 
 export async function POST(request: Request) {
   try {
+    const { isAdmin } = await requireAdminUser();
+
+    if (!isAdmin) {
+      return Response.json({ error: "Admin access required." }, { status: 403 });
+    }
+
     const input = (await request.json()) as SendToProductionInput;
 
     if (!input.orderId) {

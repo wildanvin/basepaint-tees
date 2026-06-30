@@ -5,8 +5,17 @@ import {
   CheckoutAddressForm,
   type CheckoutFormState,
 } from "@/components/checkout-address-form";
-import { CheckoutSummary, type CheckoutResponse } from "@/components/checkout-summary";
+import {
+  CheckoutSummary,
+  type CheckoutQuoteResponse,
+  type CheckoutResponse,
+} from "@/components/checkout-summary";
 import type { DemoProduct, ShirtSize } from "@/lib/demo-product";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import {
+  normalizeWalletAddress,
+  walletAddressFromIdentityData,
+} from "@/lib/wallet-address";
 
 type CheckoutModalProps = {
   isOpen: boolean;
@@ -53,6 +62,18 @@ function weiToHex(value: string) {
   return `0x${BigInt(value).toString(16)}`;
 }
 
+function walletFromUser(user: {
+  identities?: Array<{ identity_data?: Record<string, unknown> }>;
+  user_metadata?: Record<string, unknown>;
+} | null) {
+  const identityAddress = user?.identities
+    ?.map((identity) => walletAddressFromIdentityData(identity.identity_data))
+    .find(Boolean);
+  const metadataCandidate = user?.user_metadata?.address ?? user?.user_metadata?.wallet_address;
+
+  return identityAddress ?? normalizeWalletAddress(metadataCandidate);
+}
+
 export function CheckoutModal({
   isOpen,
   onClose,
@@ -61,9 +82,10 @@ export function CheckoutModal({
 }: CheckoutModalProps) {
   const [step, setStep] = useState<"shipping" | "summary">("shipping");
   const [form, setForm] = useState<CheckoutFormState>(initialForm);
-  const [checkout, setCheckout] = useState<CheckoutResponse>();
+  const [quote, setQuote] = useState<CheckoutQuoteResponse>();
   const [error, setError] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
+  const supabase = getSupabaseBrowser();
 
   if (!isOpen) {
     return null;
@@ -71,7 +93,7 @@ export function CheckoutModal({
 
   function closeModal() {
     setStep("shipping");
-    setCheckout(undefined);
+    setQuote(undefined);
     setError(undefined);
     setIsLoading(false);
     onClose();
@@ -82,7 +104,7 @@ export function CheckoutModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/checkout", {
+      const response = await fetch("/api/checkout/quote", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,13 +125,13 @@ export function CheckoutModal({
           },
         }),
       });
-      const data = (await response.json()) as CheckoutResponse;
+      const data = (await response.json()) as CheckoutQuoteResponse;
 
       if (!response.ok || data.error) {
         throw new Error(data.error ?? "Checkout is not available right now.");
       }
 
-      setCheckout(data);
+      setQuote(data);
       setStep("summary");
     } catch (quoteError) {
       setError(
@@ -123,7 +145,7 @@ export function CheckoutModal({
   }
 
   async function payWithWallet() {
-    if (!checkout) {
+    if (!quote) {
       return;
     }
 
@@ -136,9 +158,27 @@ export function CheckoutModal({
     setIsLoading(true);
 
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Sign in with Ethereum before payment.");
+      }
+
       const accounts = (await window.ethereum.request({
         method: "eth_requestAccounts",
       })) as string[];
+      const walletAddress = normalizeWalletAddress(accounts[0]);
+      const signedWallet = walletFromUser(user);
+
+      if (!walletAddress) {
+        throw new Error("No connected wallet address found.");
+      }
+
+      if (signedWallet && signedWallet !== walletAddress) {
+        throw new Error("Connected wallet does not match the signed-in wallet.");
+      }
 
       try {
         await window.ethereum.request({
@@ -150,6 +190,34 @@ export function CheckoutModal({
           method: "wallet_addEthereumChain",
           params: [baseChain],
         });
+      }
+
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dailyProductId: product.id,
+          size: selectedSize,
+          customerEmail: form.customerEmail,
+          customerName: form.customerName,
+          walletAddress,
+          shipping: {
+            line1: form.line1,
+            line2: form.line2,
+            reference: form.reference,
+            city: form.city,
+            state: form.state,
+            postalCode: form.postalCode,
+            country: form.country,
+          },
+        }),
+      });
+      const checkout = (await response.json()) as CheckoutResponse;
+
+      if (!response.ok || checkout.error) {
+        throw new Error(checkout.error ?? "Unable to create payment order.");
       }
 
       await window.ethereum.request({
@@ -210,12 +278,12 @@ export function CheckoutModal({
               onChange={setForm}
               onSubmit={createCheckoutQuote}
             />
-          ) : checkout ? (
+          ) : quote ? (
             <CheckoutSummary
-              checkout={checkout}
               isLoading={isLoading}
               onBack={() => setStep("shipping")}
               onPay={payWithWallet}
+              quote={quote}
               selectedSize={selectedSize}
               shirtColor={product.shirtColor}
               theme={product.theme}

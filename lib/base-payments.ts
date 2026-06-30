@@ -52,6 +52,12 @@ export type CheckoutQuote = {
   paymentReference: string;
 };
 
+export type EstimatedCheckoutQuote = {
+  displayAmountEth: string;
+  ethUsdPrice: string;
+  chainId: number;
+};
+
 export type PaymentTransfer = {
   txHash: string;
   fromAddress: string;
@@ -170,6 +176,21 @@ export async function createCheckoutQuote({
     chainId: BASE_CHAIN_ID,
     expiresAt,
     paymentReference: reference,
+  };
+}
+
+export async function createEstimatedCheckoutQuote({
+  priceCents,
+}: {
+  priceCents: number;
+}): Promise<EstimatedCheckoutQuote> {
+  const ethUsdPrice = await getEthUsdPrice();
+  const expectedAmountWei = usdCentsToWei(priceCents, ethUsdPrice);
+
+  return {
+    displayAmountEth: formatEth(expectedAmountWei),
+    ethUsdPrice,
+    chainId: BASE_CHAIN_ID,
   };
 }
 
