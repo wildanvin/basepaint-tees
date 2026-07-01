@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { DemoProduct } from "@/lib/demo-product";
 import { AccountButton } from "@/components/account-button";
+import { BrandLogo } from "@/components/brand-logo";
 import { ProductCarousel } from "@/components/product-carousel";
 import { ProductDetails } from "@/components/product-details";
 
@@ -12,13 +12,11 @@ export function ProductExperience({
   productEthPrice?: string;
 }) {
   return (
-    <main className="min-h-screen bg-[#f7f4ee] text-[#171717]">
-      <header className="border-b border-[#171717]/15 px-5 py-4">
+    <main className="min-h-screen bg-[#050608] text-white">
+      <header className="border-b border-white/10 bg-[#090a0c] px-5 py-4">
         <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <Link className="text-sm font-bold uppercase tracking-[0.18em]" href="/">
-            BasePaint Tees
-          </Link>
-          <AccountButton />
+          <BrandLogo />
+          <AccountButton tone="dark" />
         </nav>
       </header>
 

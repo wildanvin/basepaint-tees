@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AccountButton } from "@/components/account-button";
 import { AdminAgentPanel } from "@/components/admin-agent-panel";
 import { AdminOrderActions } from "@/components/admin-order-actions";
+import { BrandLogo } from "@/components/brand-logo";
 import { getDailyProduct } from "@/lib/basepaint";
 import { formatPrice } from "@/lib/demo-product";
 import { getFulfillmentMode, getRecentOrders } from "@/lib/order-store";
@@ -17,10 +18,8 @@ export default async function AdminPage() {
     return (
       <main className="min-h-screen bg-[#111111] px-6 py-12 text-white">
         <section className="mx-auto max-w-3xl border border-white/20 p-8">
-          <Link className="text-sm font-bold uppercase tracking-[0.18em]" href="/">
-            BasePaint Tees
-          </Link>
-          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#ff4d6d]">
+          <BrandLogo />
+          <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#2563eb]">
             Internal dashboard
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight">
@@ -63,7 +62,8 @@ export default async function AdminPage() {
       <section className="mx-auto max-w-4xl">
         <div className="flex flex-col gap-4 border-b border-white/20 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#41c7ff]">
+            <BrandLogo />
+            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#41c7ff]">
               Internal dashboard
             </p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight">
@@ -95,7 +95,7 @@ export default async function AdminPage() {
 
         <section className="mt-8 border border-white/20 p-5">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#ff4d6d]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#2563eb]">
               Orders
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">

@@ -51,12 +51,12 @@ export function CheckoutSummary({
 }: CheckoutSummaryProps) {
   return (
     <div className="grid gap-5">
-      <div className="border border-[#171717]/15 bg-[#f7f4ee] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
+      <div className="border border-white/15 bg-[#050608] p-4">
+        <p className="font-mono text-xs font-black uppercase tracking-[0.16em] text-[#41c7ff]">
           Order summary
         </p>
-        <h3 className="mt-2 text-2xl font-semibold">{quote.productName}</h3>
-        <p className="mt-1 text-sm text-[#4a4a4a]">
+        <h3 className="mt-2 font-mono text-2xl font-black">{quote.productName}</h3>
+        <p className="mt-1 text-sm text-white/60">
           {theme} / {shirtColor} / {selectedSize}
         </p>
 
@@ -69,7 +69,7 @@ export function CheckoutSummary({
             <span>Shipping</span>
             <span className="font-semibold">{quote.shippingPrice}</span>
           </div>
-          <div className="flex justify-between gap-4 border-t border-[#171717]/15 pt-2 text-base">
+          <div className="flex justify-between gap-4 border-t border-white/10 pt-2 text-base">
             <span>Total</span>
             <span className="font-semibold">{quote.fiatPrice}</span>
           </div>
@@ -81,24 +81,24 @@ export function CheckoutSummary({
       </div>
 
       <div className="grid gap-2 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
+        <p className="font-mono text-xs font-black uppercase tracking-[0.16em] text-[#2563eb]">
           Sign in and pay on Base
         </p>
-        <p className="text-3xl font-semibold">{quote.displayAmountEth} ETH</p>
-        <p className="text-[#4a4a4a]">
+        <p className="font-mono text-3xl font-black">{quote.displayAmountEth} ETH</p>
+        <p className="text-white/60">
           Sign in with Ethereum on Base, then the final exact amount and order reference
           will be created.
         </p>
         {!isSignedIn ? (
           <div className="mt-2">
-            <AccountButton onAuthChange={onAuthChange} variant="button" />
+            <AccountButton onAuthChange={onAuthChange} tone="dark" variant="button" />
           </div>
         ) : null}
       </div>
 
       <div className={`grid gap-2 ${isSignedIn ? "sm:grid-cols-[0.7fr_1fr]" : ""}`}>
         <button
-          className="min-h-12 border border-[#171717]/25 px-5 text-sm font-bold uppercase tracking-[0.14em]"
+          className="min-h-12 border border-white/20 px-5 font-mono text-sm font-black uppercase tracking-[0.14em]"
           disabled={isLoading}
           onClick={onBack}
           type="button"
@@ -107,7 +107,7 @@ export function CheckoutSummary({
         </button>
         {isSignedIn ? (
           <button
-            className="min-h-12 border border-[#171717] bg-[#171717] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2b2b2b] disabled:cursor-wait disabled:bg-[#696969]"
+            className="min-h-12 border border-[#41c7ff] bg-[#41c7ff] px-5 font-mono text-sm font-black uppercase tracking-[0.14em] text-[#050608] transition hover:bg-white disabled:cursor-wait disabled:bg-[#696969]"
             disabled={isLoading}
             onClick={onPay}
             type="button"

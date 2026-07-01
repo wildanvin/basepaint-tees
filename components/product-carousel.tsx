@@ -38,6 +38,20 @@ function displayLabel(label: string, cameraLabel?: string) {
   return label;
 }
 
+function slideRank(slide: Slide) {
+  const value = `${slide.key} ${slide.label}`.toLowerCase();
+
+  if (value.includes("back") && !value.includes("front")) {
+    return 0;
+  }
+
+  if (value.includes("front")) {
+    return 1;
+  }
+
+  return 2;
+}
+
 function FallbackMockup({ product, side }: { product: DemoProduct; side: "front" | "back" }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#111111] px-8 pt-10">
@@ -89,8 +103,8 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
   const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
-  const slides = useMemo<Slide[]>(
-    () => [
+  const slides = useMemo<Slide[]>(() => {
+    const productSlides = [
       ...(product.mockups?.map((mockup) => ({
         label: displayLabel(mockup.label, mockup.cameraLabel),
         src: mockup.src,
@@ -118,9 +132,10 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
             },
           ]
         : []),
-    ],
-    [product.mockupBackUrl, product.mockupFrontUrl, product.mockups, product.name],
-  );
+    ];
+
+    return productSlides.sort((a, b) => slideRank(a) - slideRank(b));
+  }, [product.mockupBackUrl, product.mockupFrontUrl, product.mockups, product.name]);
   const activeSlide = slides[activeIndex];
 
   function goTo(index: number) {
@@ -162,12 +177,12 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
   }
 
   return (
-    <section className="overflow-hidden border border-[#171717] bg-[#f7f4ee] shadow-[8px_8px_0_#171717]">
-      <div className="flex items-center justify-between border-b border-[#171717]/15 bg-white px-4 py-3 text-[#171717]">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+    <section className="overflow-hidden border border-white/15 bg-[#0b0d10] shadow-[8px_8px_0_#1d4ed8]">
+      <div className="flex items-center justify-between border-b border-white/10 bg-[#090a0c] px-4 py-3 text-white">
+        <span className="font-mono text-xs font-black uppercase tracking-[0.16em]">
           {activeSlide.label}
         </span>
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696969]">
+        <span className="font-mono text-xs font-black uppercase tracking-[0.16em] text-[#41c7ff]">
           {activeIndex + 1} / {slides.length}
         </span>
       </div>
@@ -187,7 +202,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
         >
           {slides.map((slide) => (
             <div
-              className="relative min-w-full cursor-zoom-in select-none bg-[#f7f4ee]"
+              className="relative min-w-full cursor-zoom-in select-none bg-[#050608]"
               key={slide.key}
             >
               {slide.src ? (
@@ -208,7 +223,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
 
         {activeSlide.src ? (
           <div
-            className={`pointer-events-none absolute inset-0 hidden bg-[#f7f4ee] transition-opacity duration-150 lg:block ${
+            className={`pointer-events-none absolute inset-0 hidden bg-[#050608] transition-opacity duration-150 lg:block ${
               isZooming ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -224,7 +239,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
                 transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
               }}
             />
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 border border-white/20 bg-black/80 px-3 py-1 font-mono text-xs font-black uppercase tracking-[0.14em] text-white">
               Move cursor to inspect
             </div>
           </div>
@@ -232,7 +247,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
 
         <button
           aria-label="Previous product view"
-          className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[#171717]/20 bg-white/85 text-2xl text-[#171717] shadow-sm"
+          className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/20 bg-[#090a0c]/85 text-2xl text-white shadow-sm"
           onClick={() => goTo(activeIndex - 1)}
           type="button"
         >
@@ -240,7 +255,7 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
         </button>
         <button
           aria-label="Next product view"
-          className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[#171717]/20 bg-white/85 text-2xl text-[#171717] shadow-sm"
+          className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/20 bg-[#090a0c]/85 text-2xl text-white shadow-sm"
           onClick={() => goTo(activeIndex + 1)}
           type="button"
         >
@@ -248,14 +263,14 @@ export function ProductCarousel({ product }: { product: DemoProduct }) {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-[#171717]/15 bg-white px-4 py-3">
+      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-[#090a0c] px-4 py-3">
         {slides.map((slide, index) => (
           <button
             aria-label={`Show ${slide.label.toLowerCase()} view`}
-            className={`min-h-8 border border-[#171717]/40 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] ${
+            className={`min-h-8 border px-2 font-mono text-[10px] font-black uppercase tracking-[0.08em] ${
               activeIndex === index
-                ? "bg-[#171717] text-white"
-                : "bg-transparent text-[#171717]"
+                ? "border-[#41c7ff] bg-[#41c7ff] text-[#050608]"
+                : "border-white/20 bg-transparent text-white/70"
             }`}
             key={slide.key}
             onClick={() => goTo(index)}

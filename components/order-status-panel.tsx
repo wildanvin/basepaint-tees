@@ -98,33 +98,33 @@ export function OrderStatusPanel({
   }, [order, reference]);
 
   return (
-    <div className="border border-[#171717] bg-white p-8 shadow-[8px_8px_0_#171717]">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#ff4d6d]">
+    <div className="border border-white/15 bg-[#0b0d10] p-8 shadow-[8px_8px_0_#41c7ff]">
+      <p className="font-mono text-sm font-black uppercase tracking-[0.18em] text-[#2563eb]">
         Order status
       </p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+      <h1 className="mt-4 font-mono text-4xl font-black tracking-tight text-white">
         {statusTitle(order?.status)}
       </h1>
-      <p className="mt-4 text-lg leading-8 text-[#4a4a4a]">
+      <p className="mt-4 text-lg leading-8 text-white/65">
         This page updates automatically after your Base payment is confirmed.
       </p>
 
       {error ? (
-        <p className="mt-5 border border-[#ff4d6d] bg-[#fff1f4] p-3 text-sm font-semibold text-[#b00020]">
+        <p className="mt-5 border border-[#ff4d6d] bg-[#2c090f] p-3 text-sm font-semibold text-[#ff8fa3]">
           {error}
         </p>
       ) : null}
 
       {order ? (
-        <dl className="mt-6 grid gap-4 text-sm">
+        <dl className="mt-6 grid gap-4 text-sm text-white">
           <div>
-            <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
+            <dt className="font-mono font-black uppercase tracking-[0.14em] text-[#41c7ff]">
               Status
             </dt>
             <dd className="mt-1 text-lg font-semibold">{statusTitle(order.status)}</dd>
           </div>
           <div>
-            <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
+            <dt className="font-mono font-black uppercase tracking-[0.14em] text-[#41c7ff]">
               Payment
             </dt>
             <dd className="mt-1 break-all">
@@ -134,14 +134,14 @@ export function OrderStatusPanel({
             </dd>
           </div>
           <div>
-            <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
+            <dt className="font-mono font-black uppercase tracking-[0.14em] text-[#41c7ff]">
               Production
             </dt>
             <dd className="mt-1">{statusTitle(order.status)}</dd>
           </div>
           {order.expiresAt ? (
             <div>
-              <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
+              <dt className="font-mono font-black uppercase tracking-[0.14em] text-[#41c7ff]">
                 Expires
               </dt>
               <dd className="mt-1">{new Date(order.expiresAt).toLocaleString()}</dd>
@@ -149,9 +149,9 @@ export function OrderStatusPanel({
           ) : null}
         </dl>
       ) : (
-        <dl className="mt-6 grid gap-4 text-sm">
+        <dl className="mt-6 grid gap-4 text-sm text-white">
           <div>
-            <dt className="font-semibold uppercase tracking-[0.14em] text-[#696969]">
+            <dt className="font-mono font-black uppercase tracking-[0.14em] text-[#41c7ff]">
               Reference
             </dt>
             <dd className="mt-1 break-all">{reference}</dd>
@@ -160,7 +160,7 @@ export function OrderStatusPanel({
       )}
 
       <Link
-        className="mt-8 inline-flex min-h-12 items-center justify-center border border-[#171717] bg-[#171717] px-5 text-sm font-semibold uppercase tracking-[0.14em] text-white"
+        className="mt-8 inline-flex min-h-12 items-center justify-center border border-[#41c7ff] bg-[#41c7ff] px-5 font-mono text-sm font-black uppercase tracking-[0.14em] text-[#050608]"
         href="/"
       >
         Back to today&apos;s tee

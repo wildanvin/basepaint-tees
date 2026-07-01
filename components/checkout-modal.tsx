@@ -218,21 +218,21 @@ export function CheckoutModal({
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end bg-black/55 p-0 sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end bg-black/70 p-0 sm:items-center sm:p-6"
       role="dialog"
     >
-      <div className="max-h-[92vh] w-full overflow-auto border border-[#171717] bg-white p-5 shadow-[8px_8px_0_#171717] sm:mx-auto sm:max-w-2xl sm:p-6">
+      <div className="max-h-[92vh] w-full overflow-auto border border-white/15 bg-[#0b0d10] p-5 text-white shadow-[8px_8px_0_#41c7ff] sm:mx-auto sm:max-w-2xl sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#ff4d6d]">
+            <p className="font-mono text-xs font-black uppercase tracking-[0.18em] text-[#2563eb]">
               Checkout
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            <h2 className="mt-2 font-mono text-3xl font-black tracking-tight">
               {step === "shipping" ? "Shipping details" : "Review and pay"}
             </h2>
           </div>
           <button
-            className="flex size-10 items-center justify-center border border-[#171717]/25 text-xl leading-none"
+            className="flex size-10 items-center justify-center border border-white/20 text-xl leading-none"
             onClick={closeModal}
             type="button"
           >
@@ -242,9 +242,9 @@ export function CheckoutModal({
 
         <div className="mt-5 flex gap-2">
           <div
-            className={`h-1 flex-1 ${step === "shipping" ? "bg-[#171717]" : "bg-[#41c7ff]"}`}
+            className={`h-1 flex-1 ${step === "shipping" ? "bg-[#41c7ff]" : "bg-white/20"}`}
           />
-          <div className={`h-1 flex-1 ${step === "summary" ? "bg-[#171717]" : "bg-[#d8d8d8]"}`} />
+          <div className={`h-1 flex-1 ${step === "summary" ? "bg-[#41c7ff]" : "bg-white/20"}`} />
         </div>
 
         <div className="mt-6">
@@ -271,7 +271,7 @@ export function CheckoutModal({
         </div>
 
         {error ? (
-          <p className="mt-4 border border-[#ff4d6d] bg-[#fff1f4] px-3 py-2 text-sm font-semibold text-[#b00020]">
+          <p className="mt-4 border border-[#ff4d6d] bg-[#2c090f] px-3 py-2 text-sm font-semibold text-[#ff8fa3]">
             {error}
           </p>
         ) : null}

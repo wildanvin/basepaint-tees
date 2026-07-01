@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 import { OrderStatusPanel } from "@/components/order-status-panel";
 import { fulfillPaidOrder } from "@/lib/fulfillment";
 import { getOrderByPaymentReference } from "@/lib/order-store";
@@ -18,11 +18,9 @@ export default async function OrderPage({
   const visibleOrder = shouldFulfill ? await fulfillPaidOrder(order) : order;
 
   return (
-    <main className="min-h-screen bg-[#f7f4ee] px-6 py-16 text-[#171717]">
+    <main className="min-h-screen bg-[#050608] px-6 py-16 text-white">
       <section className="mx-auto flex max-w-2xl flex-col gap-6">
-        <Link className="text-sm font-semibold uppercase tracking-[0.18em]" href="/">
-          BasePaint Tees
-        </Link>
+        <BrandLogo />
         <OrderStatusPanel initialOrder={visibleOrder} reference={reference} />
       </section>
     </main>

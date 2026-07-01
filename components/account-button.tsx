@@ -143,7 +143,11 @@ export function AccountButton({
 
   const buttonClass =
     variant === "button"
-      ? "min-h-12 border border-[#171717] bg-[#171717] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-[#2b2b2b] disabled:cursor-wait disabled:bg-[#696969]"
+      ? `min-h-12 border px-5 font-mono text-sm font-black uppercase tracking-[0.14em] transition disabled:cursor-wait disabled:bg-[#696969] ${
+          isDark
+            ? "border-[#41c7ff] bg-[#41c7ff] text-[#050608] hover:bg-white"
+            : "border-[#171717] bg-[#171717] text-white hover:bg-[#2b2b2b]"
+        }`
       : `text-sm font-semibold uppercase tracking-[0.14em] underline underline-offset-4 ${
           isDark ? "text-white" : "text-[#171717]"
         } disabled:opacity-60`;
