@@ -32,13 +32,13 @@ The app fetches the current BasePaint artwork, generates fixed print assets, syn
 Install dependencies:
 
 ```bash
-npm install
+yarn install
 ```
 
 Run the dev server:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
 Open `http://localhost:3000`. If port `3000` is already in use, Next will pick another port.
@@ -46,8 +46,8 @@ Open `http://localhost:3000`. If port `3000` is already in use, Next will pick a
 Run checks:
 
 ```bash
-npm run lint
-npm run build
+yarn lint
+yarn build
 ```
 
 ## Environment Variables
@@ -200,6 +200,22 @@ The UI intentionally references BasePaint without cloning it:
 
 The product carousel defaults to the back design because that is the main sellable artwork view.
 
+## Promotional Video
+
+The project includes a Remotion composition for a vertical selling/tutorial video:
+
+```bash
+yarn video:studio
+```
+
+Render the MP4:
+
+```bash
+yarn video:render
+```
+
+The composition is `BasePaintTeesPromo` in `remotion/BasePaintTeesPromo.tsx`. The editable product values and asset paths live in `remotion/Root.tsx`.
+
 ## Production Checklist
 
 - Confirm all env vars are set in Vercel.
@@ -209,14 +225,16 @@ The product carousel defaults to the back design because that is the main sellab
 - Confirm Printify product/order creation works with a real address.
 - Configure Alchemy webhook for Base address activity.
 - Test `/api/payments/poll` after a small Base transfer.
-- Run `npm run lint` and `npm run build`.
+- Run `yarn lint` and `yarn build`.
 - Keep `/admin` unlinked publicly and protected by SIWE admin role.
 
 ## Scripts
 
 ```bash
-npm run dev
-npm run lint
-npm run build
-npm run start
+yarn dev
+yarn lint
+yarn build
+yarn start
+yarn video:studio
+yarn video:render
 ```
