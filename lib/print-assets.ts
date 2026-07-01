@@ -1,4 +1,5 @@
 import { mkdir } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import type { DemoProduct } from '@/lib/demo-product'
@@ -9,6 +10,9 @@ type GeneratedAssets = Pick<
 >
 
 const publicDir = path.join(process.cwd(), 'public')
+const assetOutputRoot =
+  process.env.PRINT_ASSET_OUTPUT_DIR ??
+  (process.env.VERCEL ? path.join(tmpdir(), 'basepaint-tees') : publicDir)
 
 // Main production canvas for transparent PNG print files.
 // These dimensions are intentionally taller than the visible shirt mockup so
@@ -75,7 +79,7 @@ const fallbackMockupLayout = {
 }
 
 function outputPath(day: number, filename: string) {
-  return path.join(publicDir, 'generated', `basepaint-${day}`, filename)
+  return path.join(assetOutputRoot, 'generated', `basepaint-${day}`, filename)
 }
 
 function outputUrl(day: number, filename: string) {
@@ -374,7 +378,7 @@ export async function generatePrintAssets(
   product: DemoProduct,
 ): Promise<GeneratedAssets> {
   const dir = path.join(
-    publicDir,
+    assetOutputRoot,
     'generated',
     `basepaint-${product.basepaintDay}`,
   )
