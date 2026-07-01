@@ -1,8 +1,10 @@
 import { createEstimatedCheckoutQuote } from "@/lib/base-payments";
+import { getCheckoutPricing } from "@/lib/checkout-pricing";
 import { formatPrice, type ShirtSize } from "@/lib/demo-product";
 import { type ShippingAddress } from "@/lib/order-store";
 import { calculatePrintifyShipping } from "@/lib/printify";
 import { getActiveProduct } from "@/lib/product-store";
+import { getAuthenticatedUser, isAdminUser } from "@/lib/supabase-auth";
 
 type QuoteInput = {
   dailyProductId?: string;
@@ -62,6 +64,7 @@ function validateShipping(input: QuoteInput["shipping"]): ShippingAddress {
 export async function POST(request: Request) {
   try {
     const input = (await request.json()) as QuoteInput;
+    const user = await getAuthenticatedUser();
     const product = await getActiveProduct();
 
     if (!product) {
@@ -96,16 +99,23 @@ export async function POST(request: Request) {
       customerName,
       customerEmail,
     });
-    const totalPriceCents = product.priceCents + fulfillmentQuote.shippingCostCents;
-    const estimatedQuote = await createEstimatedCheckoutQuote({ priceCents: totalPriceCents });
+    const pricing = getCheckoutPricing({
+      productPriceCents: product.priceCents,
+      shippingCostCents: fulfillmentQuote.shippingCostCents,
+      isAdmin: user ? await isAdminUser(user.id) : false,
+    });
+    const estimatedQuote = await createEstimatedCheckoutQuote({
+      priceCents: pricing.totalChargeCents,
+    });
 
     return Response.json({
       productName: product.name,
-      productPrice: formatPrice(product.priceCents, product.currency),
-      shippingPrice: formatPrice(fulfillmentQuote.shippingCostCents, product.currency),
-      fiatPrice: formatPrice(totalPriceCents, product.currency),
+      productPrice: formatPrice(pricing.productChargeCents, product.currency),
+      shippingPrice: formatPrice(pricing.shippingChargeCents, product.currency),
+      fiatPrice: formatPrice(pricing.totalChargeCents, product.currency),
       shippingCostCents: fulfillmentQuote.shippingCostCents,
-      totalPriceCents,
+      totalPriceCents: pricing.totalChargeCents,
+      isAdminDiscount: pricing.isAdminDiscount,
       chainId: estimatedQuote.chainId,
       displayAmountEth: estimatedQuote.displayAmountEth,
       ethUsdPrice: estimatedQuote.ethUsdPrice,

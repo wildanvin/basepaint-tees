@@ -13,6 +13,7 @@ export type CheckoutQuoteResponse = {
   chainId: number;
   displayAmountEth: string;
   ethUsdPrice: string;
+  isAdminDiscount?: boolean;
   error?: string;
 };
 
@@ -59,6 +60,11 @@ export function CheckoutSummary({
         <p className="mt-1 text-sm text-white/60">
           {theme} / {shirtColor} / {selectedSize}
         </p>
+        {quote.isAdminDiscount ? (
+          <p className="mt-3 border border-[#41c7ff]/40 bg-[#41c7ff]/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#dff8ff]">
+            Admin checkout price applied
+          </p>
+        ) : null}
 
         <div className="mt-4 grid gap-2 text-sm">
           <div className="flex justify-between gap-4">

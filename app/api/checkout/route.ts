@@ -3,6 +3,7 @@ import {
   getRecentReceiverTransfers,
   matchAndConfirmTransfer,
 } from "@/lib/base-payments";
+import { getCheckoutPricing } from "@/lib/checkout-pricing";
 import { formatPrice, type ShirtSize } from "@/lib/demo-product";
 import { fulfillPaidOrder } from "@/lib/fulfillment";
 import {
@@ -13,7 +14,7 @@ import {
 } from "@/lib/order-store";
 import { calculatePrintifyShipping } from "@/lib/printify";
 import { getActiveProduct } from "@/lib/product-store";
-import { getAuthenticatedUser, syncUserProfile } from "@/lib/supabase-auth";
+import { getAuthenticatedUser, isAdminUser, syncUserProfile } from "@/lib/supabase-auth";
 import { normalizeWalletAddress } from "@/lib/wallet-address";
 
 type CheckoutInput = {
@@ -122,9 +123,13 @@ export async function POST(request: Request) {
       customerName,
       customerEmail,
     });
-    const totalPriceCents = product.priceCents + fulfillmentQuote.shippingCostCents;
+    const pricing = getCheckoutPricing({
+      productPriceCents: product.priceCents,
+      shippingCostCents: fulfillmentQuote.shippingCostCents,
+      isAdmin: await isAdminUser(user.id),
+    });
     const quote = await createCheckoutQuote({
-      priceCents: totalPriceCents,
+      priceCents: pricing.totalChargeCents,
       size: input.size,
     });
     const order = await createPaymentOrder({
@@ -144,7 +149,7 @@ export async function POST(request: Request) {
       ethUsdPrice: quote.ethUsdPrice,
       expiresAt: quote.expiresAt,
       shippingCostCents: fulfillmentQuote.shippingCostCents,
-      totalPriceCents,
+      totalPriceCents: pricing.totalChargeCents,
       printifyVariantId: fulfillmentQuote.fulfillment.variantId,
       printifyBlueprintId: fulfillmentQuote.fulfillment.blueprintId,
       printifyPrintProviderId: fulfillmentQuote.fulfillment.printProviderId,
@@ -156,11 +161,12 @@ export async function POST(request: Request) {
       paymentReference: quote.paymentReference,
       orderUrl: `/order/${quote.paymentReference}`,
       productName: product.name,
-      productPrice: formatPrice(product.priceCents, product.currency),
-      shippingPrice: formatPrice(fulfillmentQuote.shippingCostCents, product.currency),
-      fiatPrice: formatPrice(totalPriceCents, product.currency),
+      productPrice: formatPrice(pricing.productChargeCents, product.currency),
+      shippingPrice: formatPrice(pricing.shippingChargeCents, product.currency),
+      fiatPrice: formatPrice(pricing.totalChargeCents, product.currency),
       shippingCostCents: fulfillmentQuote.shippingCostCents,
-      totalPriceCents,
+      totalPriceCents: pricing.totalChargeCents,
+      isAdminDiscount: pricing.isAdminDiscount,
       receiverAddress: quote.receiverAddress,
       chainId: quote.chainId,
       expectedAmountWei: quote.expectedAmountWei,

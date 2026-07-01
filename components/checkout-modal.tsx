@@ -128,6 +128,14 @@ export function CheckoutModal({
     }
   }
 
+  async function handleAuthChange(nextIsSignedIn: boolean) {
+    setIsSignedIn(nextIsSignedIn);
+
+    if (nextIsSignedIn && step === "summary") {
+      await createCheckoutQuote();
+    }
+  }
+
   async function payWithWallet() {
     if (!quote) {
       return;
@@ -260,7 +268,7 @@ export function CheckoutModal({
               isLoading={isLoading}
               isSignedIn={isSignedIn}
               onBack={() => setStep("shipping")}
-              onAuthChange={setIsSignedIn}
+              onAuthChange={handleAuthChange}
               onPay={payWithWallet}
               quote={quote}
               selectedSize={selectedSize}
